@@ -48,6 +48,9 @@ class AccelEditor(Gtk.Dialog, Gtk.Buildable):
     def do_parser_finished(self, builder):
         self.builder = builder
 
+    def do_response(self, resp):
+        self.destroy()
+
 class AccelPlugin(GObject.Object, Gedit.WindowActivatable):
     __gtype_name__ = "AccelPlugin"
 
