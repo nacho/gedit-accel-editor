@@ -1,6 +1,3 @@
-""" This gedit-plugin provides you a easy to use (but not simple) dialog to edit 
-    and assign keyboard shortcuts. """
-
 #    accelerator-plugin
 #    Copyright (C) 2007  Hannes Matuschek <hmatuschek@gmail.com>
 #

@@ -1,6 +1,6 @@
 [Plugin]
 Loader=python
-Module=editshortcut
+Module=acceleditor
 IAge=3
 Name=Edit Shortcuts
 Description=Enables you to edit all menu shortcuts.
