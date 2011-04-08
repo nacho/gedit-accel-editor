@@ -18,7 +18,6 @@
 #  Boston, MA 02111-1307, USA.
 
 from gi.repository import GObject, Gtk, Gedit
-import os.path
 import re
 
 from gettext import gettext as _
