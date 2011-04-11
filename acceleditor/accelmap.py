@@ -42,10 +42,36 @@ class AccelEditor(Gtk.Dialog, Gtk.Buildable):
     HEADER_COLUMN = 2
 
     def __init__(self):
-        pass
+        self.model = None
+        self.treeview = None
+
+    def __getitem__(self, key):
+        return self.builder.get_object(key)
+
+    def populate_treeview(self, data, accel_path, accel_key, accel_mods, changed):
+        regex = re.match("^<Actions>/(.+)/(.+)$", accel_path)
+        if not regex:
+            #skip wrongly formatted actions
+            return
+
+        group, action = regex.group(1), regex.group(2)
+
+        if not group in self.group_iters:
+            self.group_iters[group] = self.model.append(None, (group, ""))
+
+        self.model.append(self.group_iters[group], (action, Gtk.accelerator_get_label(accel_key, accel_mods)))
 
     def do_parser_finished(self, builder):
         self.builder = builder
+        self.model = self['accel_store']
+        self.treeview = self['accel_editor']
+
+        self.group_iters = dict()
+        #add the accels to the treeview
+        Gtk.AccelMap.foreach(None, self.populate_treeview)
+
+        self.treeview.set_model(self.model)
+        self.treeview.expand_all()
 
     def do_response(self, resp):
         self.destroy()
