@@ -34,19 +34,55 @@ ui_str = """
 </ui>
 """
 
+class KeyVal(GObject.Object):
+    __gtype_name__ = "GeditAccelEditorKeyVal"
+
+    def __init__(self, key, mods):
+        GObject.Object.__init__(self)
+        self.key = key
+        self.mods = mods
+
+    def get_key(self):
+        return self.key
+
+    def get_mods(self):
+        return self.mods
+
 class AccelEditor(Gtk.Dialog, Gtk.Buildable):
     __gtype_name__ = "GeditAccelEditorDialog"
 
     ACTION_COLUMN = 0
     SHORTCUT_COLUMN = 1
-    HEADER_COLUMN = 2
 
     def __init__(self):
+        Gtk.Dialog.__init__(self)
         self.model = None
         self.treeview = None
 
     def __getitem__(self, key):
         return self.builder.get_object(key)
+
+    def accel_set_func(self, column, cell, model, it, data):
+        keyval = model.get_value(it, self.SHORTCUT_COLUMN)
+
+        if not keyval:
+            cell.set_property('visible', False)
+        else:
+            cell.set_property('visible', True)
+            cell.set_property('accel-key', keyval.get_key())
+            cell.set_property('accel-mods', keyval.get_mods())
+
+    def on_accel_cleared(self, accel, path_str):
+        it = self.model.get_iter_from_string(path_str)
+
+        keyval = KeyVal(0, 0)
+        self.model.set_value(it, self.SHORTCUT_COLUMN, keyval)
+
+    def on_accel_edited(self, accel, path_str, accel_key, accel_mods, hw_keycode):
+        it = self.model.get_iter_from_string(path_str)
+
+        keyval = KeyVal(accel_key, accel_mods)
+        self.model.set_value(it, self.SHORTCUT_COLUMN, keyval)
 
     def populate_treeview(self, data, accel_path, accel_key, accel_mods, changed):
         regex = re.match("^<Actions>/(.+)/(.+)$", accel_path)
@@ -57,14 +93,25 @@ class AccelEditor(Gtk.Dialog, Gtk.Buildable):
         group, action = regex.group(1), regex.group(2)
 
         if not group in self.group_iters:
-            self.group_iters[group] = self.model.append(None, (group, ""))
+            self.group_iters[group] = self.model.append(None, (group, None))
 
-        self.model.append(self.group_iters[group], (action, Gtk.accelerator_get_label(accel_key, accel_mods)))
+        keyval = KeyVal(accel_key, accel_mods)
+        self.model.append(self.group_iters[group], (action, keyval))
 
     def do_parser_finished(self, builder):
         self.builder = builder
         self.model = self['accel_store']
         self.treeview = self['accel_editor']
+        accel_column = self['shortcut-column']
+        accel_render = self['shortcut-renderer']
+
+        accel_column.set_cell_data_func(accel_render, self.accel_set_func, None)
+
+        handlers_dic = {
+            'on_accel_edited' : self.on_accel_edited,
+            'on_accel_cleared' : self.on_accel_cleared }
+
+        self.builder.connect_signals(handlers_dic)
 
         self.group_iters = dict()
         #add the accels to the treeview
