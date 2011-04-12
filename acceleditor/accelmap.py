@@ -37,16 +37,26 @@ ui_str = """
 class KeyVal(GObject.Object):
     __gtype_name__ = "GeditAccelEditorKeyVal"
 
-    def __init__(self, key, mods):
+    def __init__(self, accel_path, key, mods):
         GObject.Object.__init__(self)
+        self.accel_path = accel_path
         self.key = key
         self.mods = mods
+
+    def get_accel_path(self):
+        return self.accel_path
 
     def get_key(self):
         return self.key
 
+    def set_key(self, key):
+        self.key = key
+
     def get_mods(self):
         return self.mods
+
+    def set_mods(self, mods):
+        self.mods = mods
 
 class AccelEditor(Gtk.Dialog, Gtk.Buildable):
     __gtype_name__ = "GeditAccelEditorDialog"
@@ -72,17 +82,22 @@ class AccelEditor(Gtk.Dialog, Gtk.Buildable):
             cell.set_property('accel-key', keyval.get_key())
             cell.set_property('accel-mods', keyval.get_mods())
 
-    def on_accel_cleared(self, accel, path_str):
+    def change_keyval(self, path_str, accel_key, accel_mods):
         it = self.model.get_iter_from_string(path_str)
 
-        keyval = KeyVal(0, 0)
-        self.model.set_value(it, self.SHORTCUT_COLUMN, keyval)
+        keyval = self.model.get_value(it, self.SHORTCUT_COLUMN)
+        keyval.set_key(accel_key)
+        keyval.set_mods(accel_mods)
+
+        self.model.row_changed(Gtk.TreePath(path_str), it)
+
+        Gtk.AccelMap.change_entry(keyval.get_accel_path(), keyval.get_key(), keyval.get_mods(), True)
+
+    def on_accel_cleared(self, accel, path_str):
+        self.change_keyval(path_str, 0, 0)
 
     def on_accel_edited(self, accel, path_str, accel_key, accel_mods, hw_keycode):
-        it = self.model.get_iter_from_string(path_str)
-
-        keyval = KeyVal(accel_key, accel_mods)
-        self.model.set_value(it, self.SHORTCUT_COLUMN, keyval)
+        self.change_keyval(path_str, accel_key, accel_mods)
 
     def populate_treeview(self, data, accel_path, accel_key, accel_mods, changed):
         regex = re.match("^<Actions>/(.+)/(.+)$", accel_path)
@@ -95,7 +110,7 @@ class AccelEditor(Gtk.Dialog, Gtk.Buildable):
         if not group in self.group_iters:
             self.group_iters[group] = self.model.append(None, (group, None))
 
-        keyval = KeyVal(accel_key, accel_mods)
+        keyval = KeyVal(accel_path, accel_key, accel_mods)
         self.model.append(self.group_iters[group], (action, keyval))
 
     def do_parser_finished(self, builder):
