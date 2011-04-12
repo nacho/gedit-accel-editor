@@ -154,7 +154,7 @@ class AccelPlugin(GObject.Object, Gedit.WindowActivatable):
         self._action_group.add_actions([('EditShortcuts', None, 
                                          _('Edit Shortcuts'), None, 
                                          _('Edit keyboard shortcuts'),
-                                         self._on_assign_accelerators)])
+                                         self.popup_editor)])
 
         manager.insert_action_group(self._action_group, -1)
         self._ui_id = manager.add_ui_from_string(ui_str)
@@ -171,7 +171,7 @@ class AccelPlugin(GObject.Object, Gedit.WindowActivatable):
     def editor_destroyed(self, dlg):
         self.dlg = None
 
-    def _on_assign_accelerators(self, action, data=None):
+    def popup_editor(self, action, data=None):
         if not self.dlg:
             builder = Gtk.Builder()
             #builder.add_from_file(os.path.join(self.plugin_info.get_data_dir(), 'ui', 'accelmap.ui'))
