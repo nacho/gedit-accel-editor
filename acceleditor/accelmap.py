@@ -19,6 +19,7 @@
 
 from gi.repository import GObject, Gtk, Gedit
 import re
+import os
 
 from gettext import gettext as _
 
@@ -88,6 +89,7 @@ class AccelEditor(Gtk.Dialog, Gtk.Buildable):
         keyval = self.model.get_value(it, self.SHORTCUT_COLUMN)
         keyval.set_key(accel_key)
         keyval.set_mods(accel_mods)
+        print accel_mods
 
         self.model.row_changed(Gtk.TreePath(path_str), it)
 
@@ -174,8 +176,7 @@ class AccelPlugin(GObject.Object, Gedit.WindowActivatable):
     def popup_editor(self, action, data=None):
         if not self.dlg:
             builder = Gtk.Builder()
-            #builder.add_from_file(os.path.join(self.plugin_info.get_data_dir(), 'ui', 'accelmap.ui'))
-            builder.add_from_file('accelmap.ui')
+            builder.add_from_file(os.path.join(self.plugin_info.get_data_dir(), 'accelmap.ui'))
 
             self.dlg = builder.get_object('accel_dialog')
             self.dlg.connect('destroy', self.editor_destroyed)
