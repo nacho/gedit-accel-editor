@@ -89,7 +89,6 @@ class AccelEditor(Gtk.Dialog, Gtk.Buildable):
         keyval = self.model.get_value(it, self.SHORTCUT_COLUMN)
         keyval.set_key(accel_key)
         keyval.set_mods(accel_mods)
-        print accel_mods
 
         self.model.row_changed(Gtk.TreePath(path_str), it)
 
